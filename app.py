@@ -1,10 +1,18 @@
 import streamlit as st
-import torch
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from text_classifier import TextClassifier
+import sys
+import os
+
+# Try to import the main classifier, fall back to a simple one if it fails
+try:
+    from text_classifier import TextClassifier
+    HAS_TRANSFORMERS = True
+except ImportError:
+    from simple_classifier import SimpleTextClassifier as TextClassifier
+    HAS_TRANSFORMERS = False
 
 # Set page configuration
 st.set_page_config(
@@ -16,10 +24,21 @@ st.set_page_config(
 # Load the classifier
 @st.cache_resource
 def load_model():
-    # In a real app, we would load a pre-trained model
-    # For this demo, we'll initialize a new one
-    classifier = TextClassifier(model_name='bert-base-uncased', num_labels=4)
-    return classifier
+    try:
+        if not HAS_TRANSFORMERS:
+            st.warning("Using simplified classifier - Transformers library not available.")
+            classifier = TextClassifier(num_labels=4)
+        else:
+            # In a real app, we would load a pre-trained model
+            # For this demo, we'll initialize a new one
+            classifier = TextClassifier(model_name='bert-base-uncased', num_labels=4)
+        return classifier
+    except Exception as e:
+        import traceback
+        st.error(f"Error loading model: {str(e)}")
+        st.code(traceback.format_exc())
+        st.info("Falling back to a simple rule-based classifier.")
+        return TextClassifier(num_labels=4)
 
 # Predefined label mappings for different models
 LABEL_MAPPINGS = {
@@ -57,10 +76,20 @@ def plot_probabilities(probs, labels):
 def main():
     # App title and description
     st.title("BERT Text Classification Demo")
-    st.write("""
-    This interactive demo showcases a BERT-based text classifier. Type or paste text below to 
+    
+    description = """
+    This interactive demo showcases a text classifier. Type or paste text below to 
     classify it using different models.
-    """)
+    """
+    
+    if not HAS_TRANSFORMERS:
+        description += """
+        
+        **Note:** This demo is currently running with a simplified rule-based classifier, 
+        as the full BERT model couldn't be loaded. Results will be approximate.
+        """
+        
+    st.write(description)
     
     # Sidebar for model selection
     st.sidebar.header("Model Configuration")
@@ -74,6 +103,11 @@ def main():
     
     # Load the appropriate model
     classifier = load_model()
+    
+    # Check if model loaded successfully
+    if classifier is None:
+        st.warning("Model could not be loaded. Some features may not work correctly.")
+        return
     
     # Create two columns for input and visualization
     col1, col2 = st.columns([3, 2])
