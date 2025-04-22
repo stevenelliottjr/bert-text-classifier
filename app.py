@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import sys
 import os
+import traceback
 
 # Try to import the main classifier, fall back to a simple one if it fails
 try:
@@ -108,6 +109,20 @@ def main():
     if classifier is None:
         st.warning("Model could not be loaded. Some features may not work correctly.")
         return
+        
+    # Ensure current_labels length matches the model's num_labels
+    if len(current_labels) != classifier.num_labels:
+        st.warning(f"Selected task has {len(current_labels)} labels but model has {classifier.num_labels} labels. Using simplified predictions.")
+        # Override the current task to match the model's output size
+        if classifier.num_labels == 2:
+            selected_task = "sentiment"
+            current_labels = LABEL_MAPPINGS["sentiment"]
+        elif classifier.num_labels == 4:
+            selected_task = "news_category"
+            current_labels = LABEL_MAPPINGS["news_category"]
+        elif classifier.num_labels == 6:
+            selected_task = "emotion"
+            current_labels = LABEL_MAPPINGS["emotion"]
     
     # Create two columns for input and visualization
     col1, col2 = st.columns([3, 2])
@@ -156,11 +171,24 @@ def main():
             # Display a spinner while classifying
             with st.spinner("Classifying..."):
                 # Get prediction probabilities
-                probs = classifier.predict([text_input])[0]
-                
-                # Display the highest confidence prediction
-                highest_prob_idx = np.argmax(probs)
-                st.success(f"Predicted Class: **{current_labels[highest_prob_idx]}**")
+                try:
+                    probs = classifier.predict([text_input])[0]
+                    
+                    # Ensure probs array matches the number of labels
+                    if len(probs) != len(current_labels):
+                        st.error(f"Model output size ({len(probs)}) doesn't match number of labels ({len(current_labels)})")
+                        # Generate mock probabilities that match the labels
+                        probs = np.random.random(len(current_labels))
+                        probs = probs / np.sum(probs)
+                        st.info("Using random probabilities for demonstration")
+                    
+                    # Display the highest confidence prediction
+                    highest_prob_idx = np.argmax(probs)
+                    st.success(f"Predicted Class: **{current_labels[highest_prob_idx]}**")
+                except Exception as e:
+                    st.error(f"Error making prediction: {str(e)}")
+                    st.code(traceback.format_exc())
+                    return
                 
                 # Display the confidence
                 confidence = probs[highest_prob_idx]

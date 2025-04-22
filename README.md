@@ -64,6 +64,35 @@ The model achieves the following performance on standard benchmarks:
 A live demo of this classifier is available at:
 [Text Classification Demo](https://text-classifier-demo.streamlit.app)
 
+### Running the Demo Locally
+
+This repository contains two demo applications:
+
+1. **Full Version (`app.py`)**: Includes the BERT model functionality, requires PyTorch and Transformers
+2. **Simple Version (`demo_app.py`)**: A lightweight demo using rule-based classification, no ML dependencies
+
+To run the simple demo:
+
+```bash
+streamlit run demo_app.py
+```
+
+To run the full BERT-based demo (requires additional dependencies):
+
+```bash
+streamlit run app.py
+```
+
+### Deploying to Streamlit Cloud
+
+To deploy this application on Streamlit Cloud:
+
+1. Fork or clone this repository to your GitHub account
+2. Create a new app on [Streamlit Cloud](https://streamlit.io/cloud)
+3. Connect to your GitHub repository
+4. Select either `app.py` (full version) or `demo_app.py` (simple version) as the main file
+5. Deploy!
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.

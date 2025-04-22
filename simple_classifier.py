@@ -9,7 +9,14 @@ import re
 class SimpleTextClassifier:
     """A very simple rule-based classifier for demo purposes."""
     
-    def __init__(self, num_labels=2):
+    def __init__(self, num_labels=2, model_name=None):
+        """
+        Initialize the classifier.
+        
+        Args:
+            num_labels: Number of output classes
+            model_name: Ignored, included for compatibility with TextClassifier
+        """
         self.num_labels = num_labels
         
         # Simple sentiment keywords
